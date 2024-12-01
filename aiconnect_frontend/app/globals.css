@@ -1,0 +1,40 @@
+@import url("https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --header-height: 3.5rem;
+  --first-color: hsl(203, 71%, 60%);
+  --second-color: hsl(277, 56%, 68%);
+  --text-color: hsl(203, 8%, 98%);
+  --text-color-light: hsl(203, 8%, 80%);
+  --body-color: hsl(259, 20%, 18%);
+}
+
+@layer base {
+  body {
+    @apply font-['Oxanium'] text-[var(--text-color)] bg-[var(--body-color)];
+  }
+}
+
+@layer components {
+  .gradient-text {
+    @apply bg-gradient-to-r from-[var(--second-color)] to-[var(--first-color)] bg-clip-text text-transparent;
+  }
+}
+
+@keyframes float-eth {
+  0%, 100% {
+    transform: translateY(0.5rem);
+  }
+  50% {
+    transform: translateY(2rem);
+  }
+}
+
+.animate-float {
+  animation: float-eth 4s ease-in-out infinite;
+}
+
