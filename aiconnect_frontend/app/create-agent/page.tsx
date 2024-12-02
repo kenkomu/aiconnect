@@ -1,55 +1,80 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Progress } from "@/components/ui/progress"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ImageUpload } from './components/ImageUpload'
-import { SidePanel } from './components/SidePanel'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ImageUpload } from './components/ImageUpload';
+import { SidePanel } from './components/SidePanel';
 
 export default function AgentProfileCreationPage() {
-  const router = useRouter()
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     profilePicture: null,
     interests: [],
-    interactionTypes: []
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [progress, setProgress] = useState(0)
+    interactionTypes: [],
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [generatedProfile, setGeneratedProfile] = useState(null);
 
   const handleInputChange = (e: { target: { name: any; value: any } }) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+    setFormData((prev) => {
+      const updatedField = Array.isArray(prev[name])
+        ? [...(prev[name] as string[]), value] // Add new value to the array
+        : [value]; // Initialize as an array if not already
+
+      return { ...prev, [name]: updatedField };
+    });
+  };
 
   const handleImageUpload = (imageFile: any) => {
-    setFormData(prev => ({ ...prev, profilePicture: imageFile }))
-  }
+    setFormData((prev) => ({ ...prev, profilePicture: imageFile }));
+  };
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+    e.preventDefault();
+    setIsSubmitting(true);
+    setProgress(0);
 
-    // Simulating on-chain profile creation
-    for (let i = 0; i <= 100; i += 10) {
-      setProgress(i)
-      await new Promise(resolve => setTimeout(resolve, 500))
+    try {
+      for (let i = 0; i <= 100; i += 10) {
+        setProgress(i);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      const response = await fetch('/api/openai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        sessionStorage.setItem('generatedProfile', JSON.stringify(data.profileData));
+        router.push('/profile'); // Redirect to profile page
+      } else {
+        console.error('Error generating profile:', data.error);
+      }
+    } catch (error) {
+      console.error('Submission failed:', error);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false)
-    router.push('/profile') // Redirect to profile page after creation
-  }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -93,7 +118,11 @@ export default function AgentProfileCreationPage() {
                   onValueChange={(value) => handleSelectChange('interests', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select interests" />
+                    <SelectValue
+                      placeholder="Select interests"
+                    >
+                      {formData.interests.join(', ')}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ai">Artificial Intelligence</SelectItem>
@@ -102,6 +131,7 @@ export default function AgentProfileCreationPage() {
                     <SelectItem value="robotics">Robotics</SelectItem>
                   </SelectContent>
                 </Select>
+
               </div>
               <div className="space-y-2">
                 <Label htmlFor="interactionTypes">Interaction Types</Label>
@@ -110,7 +140,11 @@ export default function AgentProfileCreationPage() {
                   onValueChange={(value) => handleSelectChange('interactionTypes', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select interaction types" />
+                    <SelectValue
+                      placeholder="Select interaction types"
+                    >
+                      {formData.interactionTypes.join(', ')}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="chat">Chat</SelectItem>
@@ -123,15 +157,12 @@ export default function AgentProfileCreationPage() {
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? 'Creating Profile...' : 'Create AI Agent Profile'}
               </Button>
-              {isSubmitting && (
-                <Progress value={progress} className="w-full mt-4" />
-              )}
+              {isSubmitting && <Progress value={progress} className="w-full mt-4" />}
             </form>
           </CardContent>
         </Card>
         <SidePanel />
       </div>
     </div>
-  )
+  );
 }
-
