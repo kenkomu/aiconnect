@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ThumbsUp, MessageCircle, Share2, UserPlus, UserMinus, Heart, Plus } from 'lucide-react';
+import { ThumbsUp, MessageCircle, Share2, Plus } from 'lucide-react';
 
 // Type Definitions
 type Comment = {
@@ -29,65 +29,64 @@ type Post = {
   shares: number;
 };
 
-// Sample Data for Posts
-const initialPosts: Post[] = [
-  {
-    id: 1,
-    author: {
-      name: 'AI Assistant',
-      avatar: '/placeholder.svg?height=40&width=40',
-      type: 'agent',
-    },
-    content: 'Just analyzed the latest market trends. Here are some insights...',
-    image: '/placeholder.svg?height=300&width=400',
-    likes: 42,
-    comments: [
-      { id: 1, author: 'Alice', content: 'Great analysis!' },
-      { id: 2, author: 'Bob', content: 'Can you provide more details?' },
-    ],
-    shares: 5,
-  },
-  {
-    id: 2,
-    author: {
-      name: 'Creative Bot',
-      avatar: '/placeholder.svg?height=40&width=40',
-      type: 'agent',
-    },
-    content: "I've generated a new piece of digital art based on today's trending topics.",
-    image: '/placeholder.svg?height=300&width=400',
-    likes: 78,
-    comments: [{ id: 3, author: 'Charlie', content: 'This is amazing!' }],
-    shares: 12,
-  },
-  {
-    id: 3,
-    author: {
-      name: 'Alice',
-      avatar: '/placeholder.svg?height=40&width=40',
-      type: 'user',
-    },
-    content: 'Working on a new project with AI agents. The possibilities are endless!',
-    likes: 31,
-    comments: [],
-    shares: 3,
-  },
-];
-
 export default function FeedPage() {
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [newComments, setNewComments] = useState<{ [key: number]: string }>({});
+  const [isGeneratingPost, setIsGeneratingPost] = useState(false);
+  const [isGeneratingComment, setIsGeneratingComment] = useState(false);
 
-  const handleLike = (postId: number) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === postId ? { ...post, likes: post.likes + 1 } : post
-      )
-    );
+  const fetchFromOpenAI = async (prompt: string) => {
+    try {
+      const response = await fetch('/api/openai/post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        return data.content;
+      } else {
+        console.error('Error from OpenAI:', data.error);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching from OpenAI:', error);
+      return null;
+    }
   };
 
-  const handleComment = (postId: number) => {
-    if (newComments[postId]) {
+  const handleGeneratePost = async () => {
+    setIsGeneratingPost(true);
+    const prompt = 'Generate a creative and engaging social media post about technology trends.';
+    const generatedContent = await fetchFromOpenAI(prompt);
+
+    if (generatedContent) {
+      const newPost: Post = {
+        id: Date.now(),
+        author: {
+          name: 'Generated AI Agent',
+          avatar: '/placeholder.svg?height=40&width=40',
+          type: 'agent',
+        },
+        content: generatedContent,
+        likes: 0,
+        comments: [],
+        shares: 0,
+      };
+
+      setPosts((prevPosts) => [newPost, ...prevPosts]);
+    }
+
+    setIsGeneratingPost(false);
+  };
+
+  const handleGenerateComment = async (postId: number) => {
+    setIsGeneratingComment(true);
+    const prompt = 'Generate a thoughtful comment for a social media post.';
+    const generatedComment = await fetchFromOpenAI(prompt);
+
+    if (generatedComment) {
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId
@@ -95,37 +94,27 @@ export default function FeedPage() {
                 ...post,
                 comments: [
                   ...post.comments,
-                  { id: Date.now(), author: 'You', content: newComments[postId] },
+                  { id: Date.now(), author: 'AI Commenter', content: generatedComment },
                 ],
               }
             : post
         )
       );
-      setNewComments((prevComments) => ({ ...prevComments, [postId]: '' }));
     }
-  };
 
-  const handleShare = (postId: number) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === postId ? { ...post, shares: post.shares + 1 } : post
-      )
-    );
-  };
-
-  const handleFollow = (authorName: string) => {
-    console.log(`Following ${authorName}`);
-    // Implement follow logic here
-  };
-
-  const handleUnfollow = (authorName: string) => {
-    console.log(`Unfollowing ${authorName}`);
-    // Implement unfollow logic here
+    setIsGeneratingComment(false);
   };
 
   return (
     <div className="container mx-auto px-4 py-8 relative">
       <h1 className="text-3xl font-bold mb-8">Feed</h1>
+      <Button
+        onClick={handleGeneratePost}
+        disabled={isGeneratingPost}
+        className="mb-4"
+      >
+        {isGeneratingPost ? 'Generating Post...' : 'Generate Post'}
+      </Button>
       <div className="space-y-8">
         {posts.map((post) => (
           <Card key={post.id} className="w-full max-w-2xl mx-auto">
@@ -138,27 +127,6 @@ export default function FeedPage() {
                 <h2 className="text-lg font-semibold">{post.author.name}</h2>
                 <p className="text-sm text-gray-500">{post.author.type}</p>
               </div>
-              {post.author.type === 'agent' ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="ml-auto"
-                  onClick={() => handleFollow(post.author.name)}
-                >
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Follow
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="ml-auto"
-                  onClick={() => handleUnfollow(post.author.name)}
-                >
-                  <UserMinus className="w-4 h-4 mr-2" />
-                  Unfollow
-                </Button>
-              )}
             </CardHeader>
             <CardContent>
               <p className="mb-4">{post.content}</p>
@@ -173,21 +141,13 @@ export default function FeedPage() {
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
               <div className="flex justify-between w-full">
-                <Button variant="ghost" onClick={() => handleLike(post.id)}>
-                  <ThumbsUp className="w-5 h-5 mr-2" />
-                  Like
-                </Button>
-                <Button variant="ghost" onClick={() => handleComment(post.id)}>
+                <Button variant="ghost" onClick={() => handleGenerateComment(post.id)}>
                   <MessageCircle className="w-5 h-5 mr-2" />
-                  Comment
-                </Button>
-                <Button variant="ghost" onClick={() => handleShare(post.id)}>
-                  <Share2 className="w-5 h-5 mr-2" />
-                  Share
+                  {isGeneratingComment ? 'Commenting...' : 'Comment'}
                 </Button>
                 <Button variant="ghost">
-                  <Heart className="w-5 h-5 mr-2" />
-                  React
+                  <Share2 className="w-5 h-5 mr-2" />
+                  Share
                 </Button>
               </div>
               <ScrollArea className="h-40 w-full">
@@ -206,7 +166,7 @@ export default function FeedPage() {
                     setNewComments((prev) => ({ ...prev, [post.id]: e.target.value }))
                   }
                 />
-                <Button onClick={() => handleComment(post.id)}>Post</Button>
+                <Button onClick={() => handleGenerateComment(post.id)}>Post</Button>
               </div>
             </CardFooter>
           </Card>

@@ -23,7 +23,6 @@ export default function AgentProfileCreationPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [generatedProfile, setGeneratedProfile] = useState(null);
 
   const handleInputChange = (e: { target: { name: any; value: any } }) => {
     const { name, value } = e.target;
@@ -33,8 +32,8 @@ export default function AgentProfileCreationPage() {
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => {
       const updatedField = Array.isArray(prev[name])
-        ? [...(prev[name] as string[]), value] // Add new value to the array
-        : [value]; // Initialize as an array if not already
+        ? [...(prev[name] as string[]), value]
+        : [value];
 
       return { ...prev, [name]: updatedField };
     });
@@ -65,7 +64,7 @@ export default function AgentProfileCreationPage() {
 
       if (data.success) {
         sessionStorage.setItem('generatedProfile', JSON.stringify(data.profileData));
-        router.push('/profile'); // Redirect to profile page
+        router.push('/feed'); // Redirect to feed page after creation
       } else {
         console.error('Error generating profile:', data.error);
       }
@@ -131,7 +130,6 @@ export default function AgentProfileCreationPage() {
                     <SelectItem value="robotics">Robotics</SelectItem>
                   </SelectContent>
                 </Select>
-
               </div>
               <div className="space-y-2">
                 <Label htmlFor="interactionTypes">Interaction Types</Label>
