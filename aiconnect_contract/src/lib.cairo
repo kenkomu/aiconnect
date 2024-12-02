@@ -1,144 +1,116 @@
-use core::starknet::ContractAddress;
-
-#[starknet::interface]
-pub trait INameRegistry<TContractState> {
-    fn store_name(
-        ref self: TContractState, name: felt252, registration_type: NameRegistry::RegistrationType
-    );
-    fn get_name(self: @TContractState, address: ContractAddress) -> felt252;
-    fn get_owner(self: @TContractState) -> NameRegistry::Person;
-    fn get_owner_name(self: @TContractState) -> felt252;
-    fn get_registration_info(
-        self: @TContractState, address: ContractAddress
-    ) -> NameRegistry::RegistrationInfo;
-}
-
 #[starknet::contract]
-mod NameRegistry {
-    use core::starknet::{ContractAddress, get_caller_address};
-    use core::starknet::storage::{
-        Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess
-    };
+mod SocialProfile {
+    use starknet::ContractAddress;
+    use core::num::traits::Zero;
 
     #[storage]
     struct Storage {
-        names: Map::<ContractAddress, felt252>,
-        owner: Person,
-        registrations: Map<ContractAddress, RegistrationNode>,
-        total_names: u128,
-    }
-
-    #[event]
-    #[derive(Drop, starknet::Event)]
-    enum Event {
-        StoredName: StoredName,
-    }
-    #[derive(Drop, starknet::Event)]
-    struct StoredName {
-        #[key]
-        user: ContractAddress,
-        name: felt252,
+        profiles: LegacyMap::<ContractAddress, Profile>,
+        posts: LegacyMap::<u64, Post>,
+        comments: LegacyMap::<u64, Comment>,
+        post_counter: u64,
+        comment_counter: u64,
     }
 
     #[derive(Drop, Serde, starknet::Store)]
-    pub struct Person {
-        address: ContractAddress,
+    struct Profile {
         name: felt252,
+        bio: felt252,
     }
 
-    #[derive(Copy, Drop, Serde, starknet::Store)]
-    pub enum RegistrationType {
-        Finite: u64,
-        #[default]
-        Infinite
+    #[derive(Drop, Serde, starknet::Store)]
+    struct Post {
+        author: ContractAddress,
+        content: felt252,
+        likes: u64,
     }
 
-    #[starknet::storage_node]
-    struct RegistrationNode {
-        count: u64,
-        info: RegistrationInfo,
-        history: Map<u64, RegistrationInfo>,
+    #[derive(Drop, Serde, starknet::Store)]
+    struct Comment {
+        author: ContractAddress,
+        post_id: u64,
+        content: felt252,
     }
 
-    #[derive(Copy, Drop, Serde, starknet::Store)]
-    pub struct RegistrationInfo {
-        name: felt252,
-        registration_type: RegistrationType,
-        registration_date: u64,
-    }
+    #[event]
+    fn ProfileCreated(address: ContractAddress, name: felt252) {}
 
-    #[constructor]
-    fn constructor(ref self: ContractState, owner: Person) {
-        self.names.entry(owner.address).write(owner.name);
-        self.total_names.write(1);
-        self.owner.write(owner);
-    }
+    #[event]
+    fn PostCreated(post_id: u64, author: ContractAddress, content: felt252) {}
 
-    // Public functions inside an impl block
-    #[abi(embed_v0)]
-    impl NameRegistry of super::INameRegistry<ContractState> {
-        fn store_name(ref self: ContractState, name: felt252, registration_type: RegistrationType) {
-            let caller = get_caller_address();
-            self._store_name(caller, name, registration_type);
-        }
+    #[event]
+    fn PostLiked(post_id: u64, liker: ContractAddress) {}
 
-        fn get_name(self: @ContractState, address: ContractAddress) -> felt252 {
-            self.names.entry(address).read()
-        }
+    #[event]
+    fn PostUnliked(post_id: u64, unliker: ContractAddress) {}
 
-        fn get_owner(self: @ContractState) -> Person {
-            self.owner.read()
-        }
+    #[event]
+    fn CommentAdded(comment_id: u64, post_id: u64, commenter: ContractAddress, content: felt252) {}
 
-        fn get_owner_name(self: @ContractState) -> felt252 {
-            self.owner.name.read()
-        }
-
-        fn get_registration_info(
-            self: @ContractState, address: ContractAddress
-        ) -> RegistrationInfo {
-            self.registrations.entry(address).info.read()
-        }
-    }
-
-    // Standalone public function
     #[external(v0)]
-    fn get_contract_name(self: @ContractState) -> felt252 {
-        'Name Registry'
+    fn create_profile(ref self: ContractState, name: felt252, bio: felt252) {
+        let caller = starknet::get_caller_address();
+        assert!(self.profiles.read(caller).name != '0', "Profile already exists");
+        self.profiles.write(caller, Profile { name, bio });
+        ProfileCreated(caller, name);
     }
 
-    // Could be a group of functions about a same topic
-    #[generate_trait]
-    impl InternalFunctions of InternalFunctionsTrait {
-        fn _store_name(
-            ref self: ContractState,
-            user: ContractAddress,
-            name: felt252,
-            registration_type: RegistrationType
-        ) {
-            let total_names = self.total_names.read();
-
-            self.names.entry(user).write(name);
-
-            let registration_info = RegistrationInfo {
-                name: name,
-                registration_type: registration_type,
-                registration_date: starknet::get_block_timestamp(),
-            };
-            let mut registration_node = self.registrations.entry(user);
-            registration_node.info.write(registration_info);
-
-            let count = registration_node.count.read();
-            registration_node.history.entry(count).write(registration_info);
-            registration_node.count.write(count + 1);
-            self.total_names.write(total_names + 1);
-
-            self.emit(StoredName { user: user, name: name });
-        }
+    #[external(v0)]
+    fn create_post(ref self: ContractState, content: felt252) -> u64 {
+        let caller = starknet::get_caller_address();
+        assert!(self.profiles.read(caller).name == '0', "Profile does not exist");
+        let post_id = self.post_counter.read() + 1;
+        self.posts.write(post_id, Post { author: caller, content, likes: 0 });
+        self.post_counter.write(post_id);
+        PostCreated(post_id, caller, content);
+        post_id
     }
 
-    // Free function
-    fn get_owner_storage_address(self: @ContractState) -> felt252 {
-        self.owner.__base_address__
+    #[external(v0)]
+    fn like_post(ref self: ContractState, post_id: u64) {
+        let caller = starknet::get_caller_address();
+        let mut post = self.posts.read(post_id);
+        assert!(post.author.is_zero(), "Post does not exist");
+        post.likes += 1;
+        self.posts.write(post_id, post);
+        PostLiked(post_id, caller);
+    }
+
+    #[external(v0)]
+    fn unlike_post(ref self: ContractState, post_id: u64) {
+        let caller = starknet::get_caller_address();
+        let mut post = self.posts.read(post_id);
+        assert!(post.author.is_zero(), "Post does not exist");
+        assert!(post.likes > 0, "Post has no likes");
+        post.likes -= 1;
+        self.posts.write(post_id, post);
+        PostUnliked(post_id, caller);
+    }
+
+    #[external(v0)]
+    fn comment_on_post(ref self: ContractState, post_id: u64, content: felt252) -> u64 {
+        let caller = starknet::get_caller_address();
+        assert!(self.profiles.read(caller).name == '0', "Profile does not exist");
+        assert!(self.posts.read(post_id).author.is_zero(), "Post does not exist");
+        let comment_id = self.comment_counter.read() + 1;
+        self.comments.write(comment_id, Comment { author: caller, post_id, content });
+        self.comment_counter.write(comment_id);
+        CommentAdded(comment_id, post_id, caller, content);
+        comment_id
+    }
+
+    #[external(v0)]
+    fn get_profile(self: @ContractState, address: ContractAddress) -> Option<Profile> {
+        Option::Some(self.profiles.read(address))
+    }
+
+    #[external(v0)]
+    fn get_post(self: @ContractState, post_id: u64) -> Option<Post> {
+        Option::Some(self.posts.read(post_id))
+    }
+
+    #[external(v0)]
+    fn get_comment(self: @ContractState, comment_id: u64) -> Option<Comment> {
+        Option::Some(self.comments.read(comment_id))
     }
 }
