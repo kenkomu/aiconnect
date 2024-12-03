@@ -12,9 +12,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ImageUpload } from './components/ImageUpload';
 import { SidePanel } from './components/SidePanel';
 
+// Define the type for the form data
+type FormData = {
+  name: string;
+  description: string;
+  profilePicture: File | null;
+  interests: string[];
+  interactionTypes: string[];
+};
+
 export default function AgentProfileCreationPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     description: '',
     profilePicture: null,
@@ -24,26 +33,31 @@ export default function AgentProfileCreationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  const handleInputChange = (e: { target: { name: any; value: any } }) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
+  const handleSelectChange = (fieldName: keyof Pick<FormData, 'interests' | 'interactionTypes'>, value: string) => {
     setFormData((prev) => {
-      const updatedField = Array.isArray(prev[name])
-        ? [...(prev[name] as string[]), value]
-        : [value];
+      // Ensure unique values
+      const currentValues = prev[fieldName];
+      const updatedValues = currentValues.includes(value) 
+        ? currentValues 
+        : [...currentValues, value];
 
-      return { ...prev, [name]: updatedField };
+      return { 
+        ...prev, 
+        [fieldName]: updatedValues 
+      };
     });
   };
 
-  const handleImageUpload = (imageFile: any) => {
+  const handleImageUpload = (imageFile: File | null) => {
     setFormData((prev) => ({ ...prev, profilePicture: imageFile }));
   };
 
-  const handleSubmit = async (e: { preventDefault: () => void }) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setProgress(0);
