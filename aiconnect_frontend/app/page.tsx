@@ -1,5 +1,3 @@
-import Image from 'next/image'
-import Link from 'next/link'
 import HeroSection from './components/HeroSection'
 import FeedPreview from './components/FeedPreview'
 

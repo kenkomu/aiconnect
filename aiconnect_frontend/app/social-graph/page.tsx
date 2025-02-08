@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { User, Cpu, Zap, Activity, TrendingUp, UserPlus } from 'lucide-react'
+import { User, Cpu, TrendingUp, UserPlus } from 'lucide-react'
 
 // Dynamically import ForceGraph2D to avoid SSR issues
 const ForceGraph2D = dynamic(() => import('react-force-graph').then(mod => mod.ForceGraph2D), { ssr: false })
@@ -59,9 +59,8 @@ export default function SocialGraphPage() {
         finance: true
     })
 
-    const handleNodeClick = useCallback((node: any, event: MouseEvent) => {
-        const graphNode = node as GraphNode;
-        console.log('Clicked node:', graphNode)
+    const handleNodeClick = useCallback((node: GraphNode, event: MouseEvent) => {
+        console.log('Clicked node:', node)
     }, [])
 
     const filteredNodes = graphData.nodes.filter((node) =>
@@ -124,16 +123,14 @@ export default function SocialGraphPage() {
                     <div className="border rounded-lg" style={{ height: '600px' }}>
                         <ForceGraph2D
                             graphData={filteredData}
-                            nodeLabel={(node: any) => (node as GraphNode).name}
-                            nodeColor={(node: any) => {
-                                const graphNode = node as GraphNode;
-                                return graphNode.type === 'user' ? '#4f46e5' : '#10b981';
+                            nodeLabel={(node: GraphNode) => node.name}
+                            nodeColor={(node: GraphNode) => {
+                                return node.type === 'user' ? '#4f46e5' : '#10b981';
                             }}
-                            nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-                                const graphNode = node as GraphNode;
-                                if (graphNode.x === undefined || graphNode.y === undefined) return;
+                            nodeCanvasObject={(node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
+                                if (node.x === undefined || node.y === undefined) return;
                               
-                                const label = graphNode.name;
+                                const label = node.name;
                                 const fontSize = 12 / globalScale;
                                 ctx.font = `${fontSize}px Sans-Serif`;
                                 const textWidth = ctx.measureText(label).width;
@@ -141,21 +138,20 @@ export default function SocialGraphPage() {
                               
                                 ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
                                 ctx.fillRect(
-                                    graphNode.x - bckgDimensions[0] / 2, 
-                                    graphNode.y - bckgDimensions[1] / 2, 
+                                    node.x - bckgDimensions[0] / 2, 
+                                    node.y - bckgDimensions[1] / 2, 
                                     ...bckgDimensions
                                 );
                               
                                 ctx.textAlign = 'center';
                                 ctx.textBaseline = 'middle';
-                                ctx.fillStyle = graphNode.type === 'user' ? '#4f46e5' : '#10b981';
-                                ctx.fillText(label, graphNode.x, graphNode.y);
+                                ctx.fillStyle = node.type === 'user' ? '#4f46e5' : '#10b981';
+                                ctx.fillText(label, node.x, node.y);
                               
-                                graphNode.__bckgDimensions = bckgDimensions;
+                                node.__bckgDimensions = bckgDimensions;
                             }}
                             nodeCanvasObjectMode="after"
-                            nodePointerAreaPaint={(obj: any, color: string, ctx: CanvasRenderingContext2D) => {
-                                const node = obj as GraphNode;
+                            nodePointerAreaPaint={(node: GraphNode, color: string, ctx: CanvasRenderingContext2D) => {
                                 ctx.fillStyle = color;
                                 const bckgDimensions = node.__bckgDimensions;
                                 if (bckgDimensions && node.x !== undefined && node.y !== undefined) {
