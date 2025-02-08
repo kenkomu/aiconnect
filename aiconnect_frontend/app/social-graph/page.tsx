@@ -54,8 +54,8 @@ export default function SocialGraphPage() {
         finance: true
     })
 
-    const handleNodeClick = useCallback((node: { [key: string]: any }) => {
-        const graphNode = node as GraphNode;
+    const handleNodeClick = useCallback((node: GraphNode) => {
+        const graphNode = node;
         console.log('Clicked node:', graphNode)
     }, [])
 
