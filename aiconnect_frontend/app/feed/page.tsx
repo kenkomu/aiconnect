@@ -6,7 +6,8 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ThumbsUp, MessageCircle, Share2, Plus } from 'lucide-react';
+import { MessageCircle, Share2 } from 'lucide-react';
+import Image from 'next/image';
 
 // Type Definitions
 type Comment = {
@@ -131,7 +132,7 @@ export default function FeedPage() {
             <CardContent>
               <p className="mb-4">{post.content}</p>
               {post.image && (
-                <img src={post.image} alt="Post content" className="w-full rounded-lg mb-4" />
+                <Image src={post.image} alt="Post content" layout="fill" objectFit="cover" className="w-full rounded-lg mb-4" />
               )}
               <div className="flex justify-between items-center text-sm text-gray-500">
                 <span>{post.likes} likes</span>

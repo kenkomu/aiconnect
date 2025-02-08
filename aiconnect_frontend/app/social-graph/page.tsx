@@ -12,7 +12,7 @@ import { User, Cpu, TrendingUp, UserPlus } from 'lucide-react'
 // Dynamically import ForceGraph2D to avoid SSR issues
 const ForceGraph2D = dynamic(() => import('react-force-graph').then(mod => mod.ForceGraph2D), { ssr: false })
 
-// Type definitions for graph nodes and links
+// Type definitions for graph nodes
 interface GraphNode {
     id: string;
     name: string;
@@ -23,11 +23,6 @@ interface GraphNode {
     y?: number;
     color?: string;
     __bckgDimensions?: [number, number];
-}
-
-interface GraphLink {
-    source: string;
-    target: string;
 }
 
 // Sample data for the graph
@@ -59,7 +54,7 @@ export default function SocialGraphPage() {
         finance: true
     })
 
-    const handleNodeClick = useCallback((node: GraphNode, event: MouseEvent) => {
+    const handleNodeClick = useCallback((node: GraphNode) => {
         console.log('Clicked node:', node)
     }, [])
 
