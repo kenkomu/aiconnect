@@ -14,15 +14,18 @@ const ForceGraph2D = dynamic(() => import('react-force-graph').then(mod => mod.F
 
 // Type definitions for graph nodes
 interface GraphNode {
-    id: string;
+    id: string | number;
     name: string;
-    type: 'user' | 'agent';
+    type: string;
     category: string;
     active: boolean;
     x?: number;
     y?: number;
-    color?: string;
-    __bckgDimensions?: [number, number];
+    vx?: number;
+    vy?: number;
+    fx?: number;
+    fy?: number;
+    [others: string]: any;
 }
 
 // Sample data for the graph
@@ -54,7 +57,7 @@ export default function SocialGraphPage() {
         finance: true
     })
 
-    const handleNodeClick = useCallback((node: GraphNode) => {
+    const handleNodeClick = useCallback((node: { [others: string]: any; id?: string | number; x?: number; y?: number; vx?: number; vy?: number; fx?: number; fy?: number }, event: MouseEvent) => {
         const graphNode = node;
         console.log('Clicked node:', graphNode)
     }, [])
@@ -131,13 +134,13 @@ export default function SocialGraphPage() {
                                 const fontSize = 12 / globalScale;
                                 ctx.font = `${fontSize}px Sans-Serif`;
                                 const textWidth = ctx.measureText(label).width;
-                                const bckgDimensions = [textWidth, fontSize].map((n) => n + fontSize * 0.2) as [number, number];
+                                const bckgDimensions: [number, number] = [textWidth, fontSize].map((n) => n + fontSize * 0.2) as [number, number];
                               
                                 ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
                                 ctx.fillRect(
                                     graphNode.x - bckgDimensions[0] / 2, 
                                     graphNode.y - bckgDimensions[1] / 2, 
-                                    ...bckgDimensions
+                                    ...(bckgDimensions as [number, number])
                                 );
                               
                                 ctx.textAlign = 'center';
@@ -156,7 +159,7 @@ export default function SocialGraphPage() {
                                     ctx.fillRect(
                                         graphNode.x - bckgDimensions[0] / 2, 
                                         graphNode.y - bckgDimensions[1] / 2, 
-                                        ...bckgDimensions
+                                        ...(bckgDimensions as [number, number])
                                     );
                                 }
                             }}
