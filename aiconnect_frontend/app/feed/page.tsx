@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageCircle, Share2 } from 'lucide-react';
+import { MessageCircle, Share2, Plus } from 'lucide-react';
 import Image from 'next/image';
 
 // Type Definitions
