@@ -29,6 +29,27 @@ interface GraphNode {
     [others: string]: unknown;
 }
 
+// Type definition for graph links
+interface GraphLink {
+    source: string;
+    target: string;
+}
+
+// Type definition for Force Graph Node Click Handler
+type NodeClickHandler = (node: GraphNode, event: MouseEvent) => void;
+
+// Type definition for filters
+interface Filters {
+    user: boolean;
+    agent: boolean;
+    active: boolean;
+    inactive: boolean;
+    technology: boolean;
+    art: boolean;
+    finance: boolean;
+    [key: string]: boolean;
+}
+
 // Sample data for the graph
 const graphData = {
     nodes: [
@@ -37,18 +58,18 @@ const graphData = {
         { id: 'agent1', name: 'AI Assistant', type: 'agent', category: 'Technology', active: true },
         { id: 'agent2', name: 'Creative Bot', type: 'agent', category: 'Art', active: true },
         { id: 'user3', name: 'Charlie', type: 'user', category: 'Finance', active: true },
-    ],
+    ] as GraphNode[],
     links: [
         { source: 'user1', target: 'agent1' },
         { source: 'user2', target: 'agent2' },
         { source: 'user1', target: 'user3' },
         { source: 'agent1', target: 'agent2' },
-    ]
+    ] as GraphLink[]
 }
 
 export default function SocialGraphPage() {
     const [searchTerm, setSearchTerm] = useState('')
-    const [filters, setFilters] = useState({
+    const [filters, setFilters] = useState<Filters>({
         user: true,
         agent: true,
         active: false,
@@ -57,24 +78,23 @@ export default function SocialGraphPage() {
         art: true,
         finance: true
     })
-
-    const handleNodeClick = useCallback((node: { [others: string]: any; id?: string | number; x?: number; y?: number; vx?: number; vy?: number; fx?: number; fy?: number }, event: MouseEvent) => {
+    const handleNodeClick: (node: { [others: string]: unknown; id?: string | number; x?: number; y?: number; vx?: number; vy?: number; fx?: number; fy?: number; name?: string; type?: string; category?: string; active?: boolean }, event: MouseEvent) => void = (node, event) => {
         const graphNode = node as GraphNode;
-        console.log('Clicked node:', graphNode)
-    }, [])
+        console.log('Clicked node:', graphNode);
+    }
 
     const filteredNodes = graphData.nodes.filter((node) =>
         (node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             node.category.toLowerCase().includes(searchTerm.toLowerCase())) &&
         ((node.type === 'user' && filters.user) || (node.type === 'agent' && filters.agent)) &&
         ((node.active && filters.active) || (!node.active && filters.inactive)) &&
-        filters[node.category.toLowerCase() as keyof typeof filters]
+        filters[node.category.toLowerCase() as keyof Filters]
     );
 
     const filteredNodeIds = new Set(filteredNodes.map((node) => node.id));
 
     const filteredLinks = graphData.links.filter(
-        (link) => filteredNodeIds.has(link.source) && filteredNodeIds.has(link.target)
+        (link) => filteredNodeIds.has(link.source as string) && filteredNodeIds.has(link.target as string)
     );
 
     const filteredData = {
@@ -108,7 +128,7 @@ export default function SocialGraphPage() {
                         ].map(({ key, label }) => (
                             <Label key={key} className="flex items-center space-x-2">
                                 <Checkbox
-                                    checked={filters[key as keyof typeof filters]}
+                                    checked={filters[key as keyof Filters]}
                                     onCheckedChange={(checked) =>
                                         setFilters((prev) => ({ 
                                             ...prev, 
@@ -127,7 +147,7 @@ export default function SocialGraphPage() {
                             nodeColor={(node) => {
                                 return (node as GraphNode).type === 'user' ? '#4f46e5' : '#10b981';
                             }}
-                            nodeCanvasObject={(node, ctx: CanvasRenderingContext2D, globalScale: number) => {
+                            nodeCanvasObject={(node, ctx, globalScale) => {
                                 const graphNode = node as GraphNode;
                                 if (graphNode.x === undefined || graphNode.y === undefined) return;
                               
@@ -152,7 +172,7 @@ export default function SocialGraphPage() {
                                 graphNode.__bckgDimensions = bckgDimensions;
                             }}
                             nodeCanvasObjectMode="after"
-                            nodePointerAreaPaint={(node, color, ctx: CanvasRenderingContext2D) => {
+                            nodePointerAreaPaint={(node, color, ctx) => {
                                 const graphNode = node as GraphNode;
                                 ctx.fillStyle = color;
                                 const bckgDimensions = graphNode.__bckgDimensions;
