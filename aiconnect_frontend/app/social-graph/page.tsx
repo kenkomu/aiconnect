@@ -36,7 +36,7 @@ interface GraphLink {
 }
 
 // Type definition for Force Graph Node Click Handler
-type NodeClickHandler = (node: GraphNode, event: MouseEvent) => void;
+// type NodeClickHandler = (node: GraphNode, event: MouseEvent) => void;
 
 // Type definition for filters
 interface Filters {
@@ -78,10 +78,10 @@ export default function SocialGraphPage() {
         art: true,
         finance: true
     })
-    const handleNodeClick: (node: { [others: string]: unknown; id?: string | number; x?: number; y?: number; vx?: number; vy?: number; fx?: number; fy?: number; name?: string; type?: string; category?: string; active?: boolean }, event: MouseEvent) => void = (node, event) => {
-        const graphNode = node as GraphNode;
-        console.log('Clicked node:', graphNode);
-    }
+    // const handleNodeClick: (node: { [others: string]: unknown; id?: string | number; x?: number; y?: number; vx?: number; vy?: number; fx?: number; fy?: number; name?: string; type?: string; category?: string; active?: boolean }, event: MouseEvent) => void = (node, event) => {
+    //     const graphNode = node as GraphNode;
+    //     console.log('Clicked node:', graphNode);
+    // }
 
     const filteredNodes = graphData.nodes.filter((node) =>
         (node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
