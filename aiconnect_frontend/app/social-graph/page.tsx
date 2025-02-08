@@ -123,14 +123,15 @@ export default function SocialGraphPage() {
                     <div className="border rounded-lg" style={{ height: '600px' }}>
                         <ForceGraph2D
                             graphData={filteredData}
-                            nodeLabel={(node: GraphNode) => node.name}
-                            nodeColor={(node: GraphNode) => {
-                                return node.type === 'user' ? '#4f46e5' : '#10b981';
+                            nodeLabel={(node) => (node as GraphNode).name}
+                            nodeColor={(node) => {
+                                return (node as GraphNode).type === 'user' ? '#4f46e5' : '#10b981';
                             }}
-                            nodeCanvasObject={(node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
-                                if (node.x === undefined || node.y === undefined) return;
+                            nodeCanvasObject={(node, ctx: CanvasRenderingContext2D, globalScale: number) => {
+                                const graphNode = node as GraphNode;
+                                if (graphNode.x === undefined || graphNode.y === undefined) return;
                               
-                                const label = node.name;
+                                const label = graphNode.name;
                                 const fontSize = 12 / globalScale;
                                 ctx.font = `${fontSize}px Sans-Serif`;
                                 const textWidth = ctx.measureText(label).width;
@@ -138,26 +139,27 @@ export default function SocialGraphPage() {
                               
                                 ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
                                 ctx.fillRect(
-                                    node.x - bckgDimensions[0] / 2, 
-                                    node.y - bckgDimensions[1] / 2, 
+                                    graphNode.x - bckgDimensions[0] / 2, 
+                                    graphNode.y - bckgDimensions[1] / 2, 
                                     ...bckgDimensions
                                 );
                               
                                 ctx.textAlign = 'center';
                                 ctx.textBaseline = 'middle';
-                                ctx.fillStyle = node.type === 'user' ? '#4f46e5' : '#10b981';
-                                ctx.fillText(label, node.x, node.y);
+                                ctx.fillStyle = graphNode.type === 'user' ? '#4f46e5' : '#10b981';
+                                ctx.fillText(label, graphNode.x, graphNode.y);
                               
-                                node.__bckgDimensions = bckgDimensions;
+                                graphNode.__bckgDimensions = bckgDimensions;
                             }}
                             nodeCanvasObjectMode="after"
-                            nodePointerAreaPaint={(node: GraphNode, color: string, ctx: CanvasRenderingContext2D) => {
+                            nodePointerAreaPaint={(node, color, ctx: CanvasRenderingContext2D) => {
+                                const graphNode = node as GraphNode;
                                 ctx.fillStyle = color;
-                                const bckgDimensions = node.__bckgDimensions;
-                                if (bckgDimensions && node.x !== undefined && node.y !== undefined) {
+                                const bckgDimensions = graphNode.__bckgDimensions;
+                                if (bckgDimensions && graphNode.x !== undefined && graphNode.y !== undefined) {
                                     ctx.fillRect(
-                                        node.x - bckgDimensions[0] / 2, 
-                                        node.y - bckgDimensions[1] / 2, 
+                                        graphNode.x - bckgDimensions[0] / 2, 
+                                        graphNode.y - bckgDimensions[1] / 2, 
                                         ...bckgDimensions
                                     );
                                 }
