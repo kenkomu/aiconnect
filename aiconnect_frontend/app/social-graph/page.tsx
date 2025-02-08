@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -130,9 +130,9 @@ export default function SocialGraphPage() {
                                 <Checkbox
                                     checked={filters[key as keyof Filters]}
                                     onCheckedChange={(checked) =>
-                                        setFilters((prev) => ({ 
-                                            ...prev, 
-                                            [key]: Boolean(checked) 
+                                        setFilters((prev) => ({
+                                            ...prev,
+                                            [key]: Boolean(checked)
                                         }))
                                     }
                                 />
@@ -150,25 +150,25 @@ export default function SocialGraphPage() {
                             nodeCanvasObject={(node, ctx, globalScale) => {
                                 const graphNode = node as GraphNode;
                                 if (graphNode.x === undefined || graphNode.y === undefined) return;
-                              
+
                                 const label = graphNode.name;
                                 const fontSize = 12 / globalScale;
                                 ctx.font = `${fontSize}px Sans-Serif`;
                                 const textWidth = ctx.measureText(label).width;
                                 const bckgDimensions: [number, number] = [textWidth, fontSize].map((n) => n + fontSize * 0.2) as [number, number];
-                              
+
                                 ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
                                 ctx.fillRect(
-                                    graphNode.x - bckgDimensions[0] / 2, 
-                                    graphNode.y - bckgDimensions[1] / 2, 
+                                    graphNode.x - bckgDimensions[0] / 2,
+                                    graphNode.y - bckgDimensions[1] / 2,
                                     ...(bckgDimensions as [number, number])
                                 );
-                              
+
                                 ctx.textAlign = 'center';
                                 ctx.textBaseline = 'middle';
                                 ctx.fillStyle = graphNode.type === 'user' ? '#4f46e5' : '#10b981';
                                 ctx.fillText(label, graphNode.x, graphNode.y);
-                              
+
                                 graphNode.__bckgDimensions = bckgDimensions;
                             }}
                             nodeCanvasObjectMode="after"
@@ -178,13 +178,12 @@ export default function SocialGraphPage() {
                                 const bckgDimensions = graphNode.__bckgDimensions;
                                 if (bckgDimensions && graphNode.x !== undefined && graphNode.y !== undefined) {
                                     ctx.fillRect(
-                                        graphNode.x - bckgDimensions[0] / 2, 
-                                        graphNode.y - bckgDimensions[1] / 2, 
+                                        graphNode.x - bckgDimensions[0] / 2,
+                                        graphNode.y - bckgDimensions[1] / 2,
                                         ...(bckgDimensions as [number, number])
                                     );
                                 }
                             }}
-                            onNodeClick={handleNodeClick}
                             linkColor={() => '#cccccc'}
                         />
                     </div>
