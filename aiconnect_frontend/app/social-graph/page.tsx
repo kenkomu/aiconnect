@@ -25,7 +25,8 @@ interface GraphNode {
     vy?: number;
     fx?: number;
     fy?: number;
-    [others: string]: any;
+    __bckgDimensions?: [number, number];
+    [others: string]: unknown;
 }
 
 // Sample data for the graph
@@ -58,7 +59,7 @@ export default function SocialGraphPage() {
     })
 
     const handleNodeClick = useCallback((node: { [others: string]: any; id?: string | number; x?: number; y?: number; vx?: number; vy?: number; fx?: number; fy?: number }, event: MouseEvent) => {
-        const graphNode = node;
+        const graphNode = node as GraphNode;
         console.log('Clicked node:', graphNode)
     }, [])
 
